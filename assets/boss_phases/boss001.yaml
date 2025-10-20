@@ -1,0 +1,113 @@
+id: boss001
+max_hp: 120000
+guard_max: 120
+weaken:
+  duration: 6.0
+  damage_amp: 0.35
+  guard_return: 80
+intents:
+  - id: claw_swipe
+    elem: storm
+    damage: 110
+    range: 3.4
+    telegraph: 0.8
+    cast: 0.5
+    recovery: 1.0
+    interrupt_guard: 25
+    guard_damage: 18
+    tags: ["basic"]
+
+  - id: claw_swipe_plus
+    elem: storm
+    damage: 150
+    range: 3.6
+    telegraph: 0.7
+    cast: 0.5
+    recovery: 0.9
+    interrupt_guard: 30
+    guard_damage: 24
+    tags: ["basic"]
+    upgrade_of: claw_swipe
+
+  - id: tail_whip
+    elem: physical
+    damage: 120
+    range: 4.0
+    telegraph: 1.0
+    cast: 0.6
+    recovery: 1.2
+    interrupt_guard: 28
+    guard_damage: 22
+    radius: 2.8
+    tags: ["aoe"]
+
+  - id: lightning_rain
+    elem: storm
+    damage: 220
+    range: 6.0
+    telegraph: 1.8
+    cast: 1.2
+    recovery: 2.0
+    interrupt_guard: 40
+    guard_damage: 35
+    radius: 4.2
+    tags: ["major","aoe"]
+
+  - id: lightning_rain_plus
+    elem: storm
+    damage: 300
+    range: 6.5
+    telegraph: 1.5
+    cast: 1.4
+    recovery: 1.8
+    interrupt_guard: 45
+    guard_damage: 42
+    radius: 4.5
+    tags: ["major","aoe"]
+    upgrade_of: lightning_rain
+
+phases:
+  - threshold: 0.70
+    on_enter:
+      set_guard: 120
+      resist_delta: { fire: 0.2, water: -0.1, storm: -0.1 }
+      weakness: ["water","storm"]
+    intents:
+      - intent: claw_swipe
+        weight: 3
+      - intent: tail_whip
+        weight: 1
+
+    mini_climax:
+      intent: tail_whip
+      interval_min: 10.0
+      interval_max: 15.0
+    major_climax:
+      intent: lightning_rain
+      interval_min: 32.0
+      interval_max: 38.0
+
+
+  - threshold: 0.35
+    on_enter:
+      set_guard: 120
+      resist_delta: { physical: 0.2, fire: 0.2, storm: -0.3 }
+      weakness: ["storm"]
+
+    intents:
+      - intent: claw_swipe_plus
+        weight: 3.5
+        upgrade_of: claw_swipe
+      - intent: tail_whip
+        weight: 1.5
+
+    mini_climax:
+      intent: tail_whip
+      interval_min: 9.0
+      interval_max: 13.0
+
+    major_climax:
+      intent: lightning_rain_plus
+      interval_min: 28.0
+      interval_max: 34.0
+

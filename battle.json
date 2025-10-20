@@ -1,0 +1,266 @@
+{
+  "init": {
+    "gridH": 3,
+    "gridW": 3,
+    "units": [
+      {
+        "name": "Hero1",
+        "team": "A",
+        "maxHP": 14,
+        "hp": 14,
+        "row": 0,
+        "col": 0
+      },
+      {
+        "name": "Goblin1",
+        "team": "B",
+        "maxHP": 9,
+        "hp": 9,
+        "row": 2,
+        "col": 2
+      },
+      {
+        "name": "BOSS_Drake",
+        "team": "B",
+        "maxHP": 28,
+        "hp": 28,
+        "row": 0,
+        "col": 2
+      }
+    ]
+  },
+  "events": [
+    {
+      "timeTick": 12,
+      "actor": "BOSS_Drake",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 13,
+      "actor": "Hero1",
+      "action": "hit",
+      "target": "BOSS_Drake",
+      "damage": 9,
+      "crit": true,
+      "fromSkill": "PowerStrike"
+    },
+    {
+      "timeTick": 13,
+      "actor": "Hero1",
+      "action": "applyBuff",
+      "target": "BOSS_Drake",
+      "fromSkill": "PowerStrike",
+      "buffApplied": "Slow"
+    },
+    {
+      "timeTick": 15,
+      "actor": "Goblin1",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 25,
+      "actor": "Hero1",
+      "action": "hit",
+      "target": "BOSS_Drake",
+      "damage": 5,
+      "crit": true,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 25,
+      "actor": "BOSS_Drake",
+      "action": "applyBuff",
+      "target": "Hero1",
+      "buffApplied": "Vulnerable"
+    },
+    {
+      "timeTick": 29,
+      "actor": "Goblin1",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 38,
+      "actor": "Hero1",
+      "action": "hit",
+      "target": "BOSS_Drake",
+      "damage": 4,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 39,
+      "actor": "BOSS_Drake",
+      "action": "hit",
+      "target": "Hero1",
+      "damage": 7,
+      "fromSkill": "FlameBreath"
+    },
+    {
+      "timeTick": 39,
+      "actor": "BOSS_Drake",
+      "action": "applyBuff",
+      "target": "Hero1",
+      "fromSkill": "FlameBreath",
+      "buffApplied": "Burn"
+    },
+    {
+      "timeTick": 50,
+      "actor": "Hero1",
+      "action": "hit",
+      "target": "BOSS_Drake",
+      "damage": 6,
+      "crit": true,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 52,
+      "actor": "BOSS_Drake",
+      "action": "retreat",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 58,
+      "actor": "Goblin1",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 63,
+      "actor": "Hero1",
+      "action": "hit",
+      "target": "Goblin1",
+      "damage": 4,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 64,
+      "actor": "BOSS_Drake",
+      "action": "retreat",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 72,
+      "actor": "Goblin1",
+      "action": "hit",
+      "target": "Hero1",
+      "damage": 4,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 75,
+      "actor": "BOSS_Drake",
+      "action": "buffExpire",
+      "buffExpire": "Slow"
+    },
+    {
+      "timeTick": 75,
+      "actor": "Hero1",
+      "action": "retreat",
+      "newPos": {
+        "r": 1,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 77,
+      "actor": "BOSS_Drake",
+      "action": "retreat",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 86,
+      "actor": "Hero1",
+      "action": "buffExpire",
+      "buffExpire": "Vulnerable"
+    },
+    {
+      "timeTick": 86,
+      "actor": "Goblin1",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 87,
+      "actor": "BOSS_Drake",
+      "action": "move",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 88,
+      "actor": "Hero1",
+      "action": "retreat",
+      "newPos": {
+        "r": 1,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 97,
+      "actor": "BOSS_Drake",
+      "action": "retreat",
+      "newPos": {
+        "r": 0,
+        "c": 2
+      }
+    },
+    {
+      "timeTick": 100,
+      "actor": "Hero1",
+      "action": "buffExpire",
+      "buffExpire": "Burn"
+    },
+    {
+      "timeTick": 100,
+      "actor": "Hero1",
+      "action": "retreat",
+      "newPos": {
+        "r": 1,
+        "c": 0
+      }
+    },
+    {
+      "timeTick": 100,
+      "actor": "Goblin1",
+      "action": "hit",
+      "target": "Hero1",
+      "damage": 3,
+      "fromSkill": "Attack"
+    },
+    {
+      "timeTick": 100,
+      "actor": "Goblin1",
+      "action": "kill",
+      "target": "Hero1",
+      "fromSkill": "Attack"
+    }
+  ]
+}

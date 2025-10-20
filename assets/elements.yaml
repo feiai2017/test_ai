@@ -1,0 +1,28 @@
+elements:
+  - id: fire
+    tags_add: ["element.fire","apply.burning"]
+    mods:
+      damage_scalar: 1.0
+      dot:
+        id: burning
+        tick: 0.5
+        duration: 3.0
+        scale: 0.18
+
+  - id: water
+    tags_add: ["element.water","apply.wet"]
+    mods:
+      damage_scalar: 0.95
+      debuff:
+        id: wet
+        duration: 4.0
+        vuln:
+          storm: 0.2
+
+  - id: storm
+    tags_add: ["element.storm"]
+    mods:
+      chain:
+        jumps: 2
+        falloff: 0.7
+

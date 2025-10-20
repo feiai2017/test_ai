@@ -1,0 +1,75 @@
+skills:
+  - id: pyro.basic
+    hero: pyro_knight
+    elem: fire
+    range: 2.6
+    cd: 0.8
+    damage: 100
+    priority: 10
+    tags: ["basic"]
+    applies:
+      - id: burning
+        duration: 3.0
+
+  - id: pyro.burst
+    hero: pyro_knight
+    elem: fire
+    range: 3.0
+    cd: 6.0
+    damage: 320
+    priority: 100
+    gcd: 1.2
+    tags: ["burst"]
+    applies:
+      - id: burning
+        duration: 5.0
+
+  - id: aqua.basic
+    hero: aqua_mage
+    elem: water
+    range: 3.2
+    cd: 1.0
+    damage: 90
+    priority: 10
+    tags: ["basic"]
+    applies:
+      - id: wet
+        duration: 4.0
+
+  - id: aqua.burst
+    hero: aqua_mage
+    elem: water
+    range: 3.0
+    cd: 5.0
+    damage: 260
+    priority: 90
+    gcd: 1.2
+    tags: ["burst"]
+    applies:
+      - id: wet
+        duration: 6.0
+
+  - id: storm.basic
+    hero: storm_rogue
+    elem: storm
+    range: 2.8
+    cd: 0.9
+    damage: 95
+    priority: 10
+    tags: ["basic"]
+    applies:
+      - id: shock
+        duration: 2.0
+
+  - id: storm.burst
+    hero: storm_rogue
+    elem: storm
+    range: 3.2
+    cd: 4.5
+    damage: 240
+    priority: 80
+    gcd: 1.0
+    tags: ["burst"]
+    applies:
+      - id: shock
+        duration: 4.0

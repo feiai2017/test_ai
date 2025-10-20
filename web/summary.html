@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8" />
+    <title>Element Forge – Summary 可视化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --fg: #0f172a;
+            --muted: #64748b;
+            --card: #f8fafc;
+            --line: #e2e8f0;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg:#0b1220; --fg:#e5e7eb; --muted:#94a3b8; --card:#111827; --line:#1f2937; }
+        }
+        * { box-sizing: border-box; }
+        body { margin: 16px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji"; color: var(--fg); background: var(--bg);}
+        h1 { margin: 0 0 12px; font-size: 20px; }
+        .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+        .kpis { display:grid; grid-template-columns: repeat(5, minmax(140px,1fr)); gap: 10px; }
+        .kpi { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+        .kpi .label { color: var(--muted); font-size: 12px; }
+        .kpi .val { font-size: 18px; font-weight: 700; margin-top: 4px; }
+        .controls { gap: 8px; }
+        .seg { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+        .seg button { padding:6px 10px; background:transparent; border:0; color:var(--fg); cursor:pointer; }
+        .seg button.active { background: var(--fg); color: var(--bg); }
+        canvas { width: 100%; height: 340px; border-radius: 10px; background: var(--bg); border:1px solid var(--line); }
+        .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+        th:first-child, td:first-child { text-align: left; }
+        th.sortable { cursor: pointer; user-select: none; }
+        .hint { color: var(--muted); font-size: 12px; }
+        .footer { margin-top: 10px; color: var(--muted); font-size: 12px; }
+    </style>
+</head>
+<body>
+<h1>Element Forge – Summary 可视化</h1>
+
+<div class="row controls">
+    <input type="file" id="file" accept=".json" />
+    <div class="seg" id="whoSeg">
+        <button data-who="skill" class="active">按技能</button>
+        <button data-who="hero">按角色</button>
+    </div>
+    <div class="seg" id="whatSeg">
+        <button data-what="total" class="active">总量</button>
+        <button data-what="ratio">占比</button>
+    </div>
+    <span class="hint">选择 <code>summary.json</code> 以加载数据。</span>
+</div>
+
+<div class="card" style="margin-top:10px;">
+    <div class="kpis">
+        <div class="kpi"><div class="label">Runs</div><div class="val" id="k_runs">-</div></div>
+        <div class="kpi"><div class="label">Win Rate</div><div class="val" id="k_win">-</div></div>
+        <div class="kpi"><div class="label">Avg Time (s)</div><div class="val" id="k_time">-</div></div>
+        <div class="kpi"><div class="label">Avg DPS</div><div class="val" id="k_dps">-</div></div>
+        <div class="kpi"><div class="label">Total Damage</div><div class="val" id="k_total">-</div></div>
+    </div>
+</div>
+
+<div class="grid" style="margin-top:12px;">
+    <div class="card">
+        <div class="row" style="justify-content: space-between; margin-bottom:6px;">
+            <div style="font-weight:600;" id="chartTitle">按技能 · 总量</div>
+        </div>
+        <canvas id="bar"></canvas>
+    </div>
+    <div class="card">
+        <div class="row" style="justify-content: space-between; margin-bottom:6px;">
+            <div style="font-weight:600;" id="pieTitle">按技能 · 占比</div>
+        </div>
+        <canvas id="pie"></canvas>
+    </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+    <div class="row" style="justify-content: space-between; margin-bottom:6px;">
+        <div style="font-weight:600;" id="tabTitle">数据表</div>
+        <span class="hint">点击表头可排序</span>
+    </div>
+    <div style="overflow:auto;">
+        <table id="tbl">
+            <thead>
+            <tr>
+                <th class="sortable" data-key="name">名称</th>
+                <th class="sortable" data-key="total">总伤害</th>
+                <th class="sortable" data-key="ratio">占比</th>
+            </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+    <div class="footer" id="footnote"></div>
+</div>
+
+<script src="summary.js"></script>
+</body>
+</html>

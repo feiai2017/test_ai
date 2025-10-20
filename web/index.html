@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8" />
+    <title>Element Forge Player (Triangle Formation)</title>
+    <style>
+        :root { --line:#e2e8f0; --muted:#64748b; }
+        body { font-family: system-ui, sans-serif; margin: 14px; }
+        #top { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+        #hud { display:flex; gap:16px; align-items:center; margin:10px 0; }
+        .bar { width:260px; height:14px; background:#eee; border-radius:7px; overflow:hidden; }
+        .fill { height:100%; background:#6aa1ff; }
+        #stage { border:1px solid var(--line); background: #f9fbff; border-radius:10px; }
+        #log { height: 200px; overflow:auto; border:1px solid var(--line); padding:8px; margin-top:8px; border-radius:10px; }
+        .chip { padding:1px 6px; border:1px solid var(--line); border-radius:12px; margin-right:6px; font-size:12px; }
+    </style>
+</head>
+<body>
+<div id="top">
+    <input type="file" id="file" accept=".json" />
+    <label>速度:
+        <input id="speed" type="range" min="0.25" max="10" step="0.25" value="1">
+        <span id="spval">1.0x</span>
+    </label>
+    <button id="play">播放</button>
+    <button id="stop">停止</button>
+    <span id="time">t=0.00s</span>
+</div>
+
+<div id="hud">
+    <div>Boss HP</div>
+    <div class="bar"><div id="hpfill" class="fill"></div></div>
+    <div>Guard</div>
+    <div class="bar" style="width:160px"><div id="gdfill" class="fill" style="background:#f5a623"></div></div>
+    <div id="weakness"></div>
+</div>
+
+<canvas id="stage" width="900" height="520"></canvas>
+
+<div id="meters" style="margin-top:8px; border:1px solid var(--line); border-radius:10px; padding:10px;">
+    <div style="font-weight:600; margin-bottom:6px;">伤害仪表</div>
+    <div id="dmgs" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;"></div>
+    <div style="margin-top:8px; display:flex; gap:16px; align-items:center;">
+        <div style="font-weight:600;">Boss 输出</div>
+        <div id="bossdmg"></div>
+    </div>
+</div>
+
+<div id="log"></div>
+
+<script src="player.js"></script>
+</body>
+</html>
