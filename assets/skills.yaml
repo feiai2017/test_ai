@@ -7,6 +7,8 @@ skills:
     damage: 100
     priority: 10
     tags: ["basic"]
+    guard_break: 8
+    note: "基础火刃连击"
     applies:
       - id: burning
         duration: 3.0
@@ -20,6 +22,8 @@ skills:
     priority: 100
     gcd: 1.2
     tags: ["burst"]
+    guard_break: 42
+    note: "跳斩爆发，破韧突击"
     applies:
       - id: burning
         duration: 5.0
@@ -32,6 +36,8 @@ skills:
     damage: 90
     priority: 10
     tags: ["basic"]
+    guard_break: 6
+    note: "水弹远程攻击"
     applies:
       - id: wet
         duration: 4.0
@@ -45,6 +51,8 @@ skills:
     priority: 90
     gcd: 1.2
     tags: ["burst"]
+    guard_break: 36
+    note: "漩涡爆发，控场破韧"
     applies:
       - id: wet
         duration: 6.0
@@ -57,6 +65,8 @@ skills:
     damage: 95
     priority: 10
     tags: ["basic"]
+    guard_break: 7
+    note: "雷影穿刺"
     applies:
       - id: shock
         duration: 2.0
@@ -70,6 +80,8 @@ skills:
     priority: 80
     gcd: 1.0
     tags: ["burst"]
+    guard_break: 32
+    note: "大范围连锁闪击"
     applies:
       - id: shock
         duration: 4.0

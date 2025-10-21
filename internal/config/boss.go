@@ -49,6 +49,7 @@ type PhaseEnter struct {
 	SetGuard    int                `yaml:"set_guard"`
 	ResistDelta map[string]float64 `yaml:"resist_delta"`
 	Weakness    []string           `yaml:"weakness"`
+	Tags        []string           `yaml:"tags"`
 	Note        string             `yaml:"note"`
 }
 

@@ -1,14 +1,17 @@
 id: boss001
-max_hp: 120000
-guard_max: 120
+note: "风暴督军：节奏驱动的雷系首领"
+max_hp: 60000
+guard_max: 140
 weaken:
   duration: 6.0
   damage_amp: 0.35
-  guard_return: 80
+  guard_return: 90
+  note: "虚弱期间停手，受到更多伤害，结束后恢复护甲"
 intents:
   - id: claw_swipe
+    name: "雷刃横扫"
     elem: storm
-    damage: 110
+    damage: 120
     range: 3.4
     telegraph: 0.8
     cast: 0.5
@@ -16,10 +19,12 @@ intents:
     interrupt_guard: 25
     guard_damage: 18
     tags: ["basic"]
+    note: "近距离基础技，可在蓄力阶段打断"
 
   - id: claw_swipe_plus
+    name: "雷刃横扫·强化"
     elem: storm
-    damage: 150
+    damage: 160
     range: 3.6
     telegraph: 0.7
     cast: 0.5
@@ -28,22 +33,26 @@ intents:
     guard_damage: 24
     tags: ["basic"]
     upgrade_of: claw_swipe
+    note: "阶段二升级版本，伤害与破韧提升"
 
   - id: tail_whip
+    name: "旋尾风暴"
     elem: physical
-    damage: 120
+    damage: 140
     range: 4.0
     telegraph: 1.0
     cast: 0.6
     recovery: 1.2
     interrupt_guard: 28
-    guard_damage: 22
+    guard_damage: 26
     radius: 2.8
-    tags: ["aoe"]
+    tags: ["aoe","mini"]
+    note: "360°群攻，作为mini高潮技能使用"
 
   - id: lightning_rain
+    name: "落雷领域"
     elem: storm
-    damage: 220
+    damage: 240
     range: 6.0
     telegraph: 1.8
     cast: 1.2
@@ -51,63 +60,79 @@ intents:
     interrupt_guard: 40
     guard_damage: 35
     radius: 4.2
-    tags: ["major","aoe"]
+    tags: ["aoe","major"]
+    note: "大范围闪避检定，阶段终结技"
 
   - id: lightning_rain_plus
+    name: "落雷领域·强"
     elem: storm
-    damage: 300
+    damage: 320
     range: 6.5
     telegraph: 1.5
     cast: 1.4
     recovery: 1.8
     interrupt_guard: 45
     guard_damage: 42
-    radius: 4.5
-    tags: ["major","aoe"]
+    radius: 4.6
+    tags: ["aoe","major"]
     upgrade_of: lightning_rain
+    note: "阶段二升级版，覆盖更大更痛"
 
 phases:
   - threshold: 0.70
+    note: "开场节奏：基础近战穿插群攻"
     on_enter:
-      set_guard: 120
+      announce: "风暴护盾汇聚！"
+      set_guard: 140
       resist_delta: { fire: 0.2, water: -0.1, storm: -0.1 }
       weakness: ["water","storm"]
+      note: "护盾增强但暴露水/雷弱点"
     intents:
       - intent: claw_swipe
         weight: 3
+        note: "主循环基础攻势"
       - intent: tail_whip
         weight: 1
+        note: "mini高潮用群攻"
 
     mini_climax:
       intent: tail_whip
       interval_min: 10.0
       interval_max: 15.0
+      note: "每10-15秒触发一次迷你高潮"
     major_climax:
       intent: lightning_rain
       interval_min: 32.0
       interval_max: 38.0
+      note: "约30秒进入一次大招机制"
 
 
   - threshold: 0.35
+    note: "二阶段：技能升级、节奏加快"
     on_enter:
-      set_guard: 120
+      announce: "怒雷撕裂长空！"
+      set_guard: 140
       resist_delta: { physical: 0.2, fire: 0.2, storm: -0.3 }
       weakness: ["storm"]
+      note: "移除水弱点，强化雷弱点"
 
     intents:
       - intent: claw_swipe_plus
         weight: 3.5
         upgrade_of: claw_swipe
+        note: "基础技升级版"
       - intent: tail_whip
         weight: 1.5
+        note: "范围技更频繁"
 
     mini_climax:
       intent: tail_whip
       interval_min: 9.0
       interval_max: 13.0
+      note: "mini高潮更快"
 
     major_climax:
       intent: lightning_rain_plus
       interval_min: 28.0
       interval_max: 34.0
-
+      note: "使用强化版终结技"

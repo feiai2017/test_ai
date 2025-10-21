@@ -1,0 +1,27 @@
+﻿heroes:
+  - id: pyro_knight
+    name: "焰刃骑士"
+    element: fire
+    max_hp: 5200
+    speed: 3.1
+    spawn: { x: 1.0, y: 3.0 }
+    tags: ["frontline"]
+    note: "高韧性近战输出"
+
+  - id: aqua_mage
+    name: "水语术士"
+    element: water
+    max_hp: 4800
+    speed: 3.0
+    spawn: { x: 1.0, y: 5.0 }
+    tags: ["support"]
+    note: "远程控制与增幅"
+
+  - id: storm_rogue
+    name: "雷影游侠"
+    element: storm
+    max_hp: 5000
+    speed: 3.4
+    spawn: { x: 1.0, y: 7.0 }
+    tags: ["assassin"]
+    note: "高机动爆发"

@@ -10,6 +10,35 @@ let activeId = null; // 当前前台（Switch 事件或首次 Spawn 设定）
 // 单次播放内统计
 const dmgByHero = new Map();     // heroId -> { total, skill, react }
 const bossOutToHero = new Map(); // heroId -> boss对其伤害
+const metaInfo = {
+    heroNames: new Map(),
+    heroMaxHp: new Map(),
+    bossId: null,
+    bossName: null,
+    intentNames: new Map(),
+    skillNames: new Map()
+};
+const STATUS_LABELS = {
+    burning: '燃烧',
+    shock: '感电',
+    wet: '潮湿',
+    slow: '减速',
+    frostbite: '冻伤',
+    weaken: '虚弱'
+};
+const ELEMENT_LABELS = {
+    fire: '火',
+    water: '水',
+    ice: '冰',
+    storm: '雷',
+    electro: '雷',
+    hydro: '水',
+    pyro: '火',
+    geo: '岩',
+    dendro: '草',
+    physical: '物理'
+};
+let preferLogLines = false;
 
 // ===== DOM & Canvas =====
 const $ = s=>document.querySelector(s);
@@ -23,6 +52,7 @@ $('#speed').addEventListener('input', e=>{
 $('#file').addEventListener('change', async e=>{
     const f = e.target.files[0]; if (!f) return;
     const obj = JSON.parse(await f.text());
+    loadMeta(obj.meta || obj.Meta || null);
     events = obj.events || obj.Events || [];
     resetWorld();
     append(`日志加载：${events.length} 条`);
@@ -36,6 +66,7 @@ function resetWorld(){
     bossHP = maxHP; guard = maxGuard;
     actors.clear(); moves.length = 0; fx.length = 0; logBox.innerHTML = '';
     activeId = null;
+    preferLogLines = false;
     draw(); updateHUD();
 }
 
@@ -62,12 +93,35 @@ function normE(ev){ return { t: normT(ev), type: ev.type ?? ev.Type, payload: ev
 function handle(ev){
     switch(ev.type){
         case 'Spawn': {
-            const id = ev.payload.id;
-            const isBoss = !!ev.payload.boss;
-            const x = toPxX(ev.payload.x), y = toPxY(ev.payload.y);
-            actors.set(id, { id, x, y, hp: isBoss? maxHP:5000, color: isBoss?'#b00':pickColor(id), isBoss });
-            if (!isBoss && !activeId) activeId = id; // 首个英雄默认前台
-            append(`[${fmt(ev.t)}] Spawn ${id} at (${ev.payload.x},${ev.payload.y})`);
+            const payload = ev.payload || {};
+            const id = payload.id;
+            if (!id) break;
+            const isBoss = !!payload.boss;
+            const x = toPxX(payload.x), y = toPxY(payload.y);
+            const maxHpVal = payload.max_hp ?? payload.hp ?? (isBoss ? maxHP : (metaInfo.heroMaxHp.get(id) ?? 5000));
+            const hpVal = payload.hp ?? maxHpVal;
+            actors.set(id, { id, x, y, hp: hpVal, maxHp: maxHpVal, color: isBoss ? '#b00' : pickColor(id), isBoss });
+            if (isBoss){
+                maxHP = maxHpVal;
+                bossHP = hpVal;
+                const guardVal = payload.guard ?? guard;
+                const guardMaxVal = payload.guard_max ?? maxGuard;
+                guard = guardVal;
+                maxGuard = guardMaxVal;
+                metaInfo.bossId = id;
+                if (payload.name) metaInfo.bossName = payload.name;
+                if (!metaInfo.bossName) metaInfo.bossName = id;
+                updateHUD();
+            } else {
+                if (!metaInfo.heroNames.has(id) && payload.name) metaInfo.heroNames.set(id, payload.name);
+                if (maxHpVal) metaInfo.heroMaxHp.set(id, maxHpVal);
+                if (!activeId) activeId = id; // 首个英雄默认前台
+            }
+            if (!preferLogLines){
+                const hpText = `${fmt0(hpVal)}/${fmt0(maxHpVal)}`;
+                const guardText = isBoss ? `，护甲 ${fmt0(guard)}/${fmt0(maxGuard)}` : '';
+                logDetail(ev, `${actorLabel(id)} 登场，HP ${hpText}${guardText}`);
+            }
             break;
         }
         case 'Move': {
@@ -79,84 +133,147 @@ function handle(ev){
         }
         case 'Switch': {
             const to = ev.payload.to; activeId = to;
-            spawnFXText(actors.get(to)?.x ?? 60, (actors.get(to)?.y ?? 60)-60, `>> SWITCH IN <<`, 0.8);
-            append(`[${fmt(ev.t)}] Switch -> ${to}`);
+            const target = actors.get(to);
+            const nameText = displayName(to);
+            if (target) spawnFXText(target.x ?? 60, (target.y ?? 60)-60, `>> ${nameText} <<`, 0.8);
+            if (!preferLogLines){
+                logDetail(ev, `前台切换至 ${actorLabel(to)}`);
+            }
             break;
         }
         case 'Cast': {
             const c = actors.get(ev.payload.caster); if (!c) break;
-            spawnFXText(c.x, c.y-22, ev.payload.skill, 0.7);
-            append(`[${fmt(ev.t)}] Cast ${ev.payload.skill} by ${ev.payload.caster}`);
+            const skill = skillLabel(ev.payload.skill);
+            spawnFXText(c.x, c.y-22, skill, 0.7);
+            if (!preferLogLines){
+                logDetail(ev, `${actorLabel(ev.payload.caster)} 施放了 ${skill}`);
+            }
             break;
         }
         case 'ApplyStatus': {
             const target = actors.get(ev.payload.target); if (!target) break;
             spawnFXBadge(target.x, target.y-36, badgeFor(ev.payload.status), 1.2);
-            append(`[${fmt(ev.t)}] Status ${ev.payload.status} -> ${ev.payload.target}`);
+            if (!preferLogLines){
+                const statusName = statusLabel(ev.payload.status);
+                const dur = ev.payload.dur;
+                const durText = typeof dur === 'number' ? `，持续 ${dur.toFixed(1)}s` : '';
+                logDetail(ev, `${actorLabel(ev.payload.target)} 获得状态 ${statusName}${durText}`);
+            }
             break;
         }
         case 'Hit': {
-            const target = actors.get(ev.payload.target); if (target){
-                target.hp = ev.payload.hp ?? target.hp;
+            const payload = ev.payload || {};
+            const target = actors.get(payload.target);
+            if (target){
+                const dmg = payload.dmg || 0;
+                const hpVal = payload.hp ?? target.hp;
+                target.hp = hpVal;
                 if (target.isBoss) {
                     bossHP = target.hp;
                     // 英雄技能归因：caster 是英雄
-                    const hid = ev.payload.caster;
+                    const hid = payload.caster;
                     if (hid && actors.has(hid) && !actors.get(hid).isBoss){
                         const rec = dmgByHero.get(hid) || {total:0, skill:0, react:0};
-                        rec.total += ev.payload.dmg||0; rec.skill += ev.payload.dmg||0;
+                        rec.total += dmg; rec.skill += dmg;
                         dmgByHero.set(hid, rec);
                     }
                 } else {
                     // Boss 输出：caster 可能是 boss001
-                    const dmg = ev.payload.dmg||0;
                     bossOutToHero.set(target.id, (bossOutToHero.get(target.id)||0) + dmg);
                 }
                 spawnHitRing(target.x, target.y);
-                spawnFXText(target.x+10, target.y-10, `-${ev.payload.dmg}`, 0.6);
+                spawnFXText(target.x+10, target.y-10, `-${fmt0(dmg)}`, 0.6);
                 updateHUD(); renderMeters();
+                if (!preferLogLines){
+                    const casterLabel = actorLabel(payload.caster);
+                    const targetLabel = actorLabel(payload.target);
+                    const elemText = elemLabel(payload.elem);
+                    const elemDesc = elemText ? `${elemText}元素伤害` : '伤害';
+                    logDetail(ev, `${casterLabel} 对 ${targetLabel} 造成 ${fmt0(dmg)} 点${elemDesc}（剩余 HP ${fmt0(hpVal)}）`);
+                }
+            } else if (!preferLogLines){
+                const casterLabel = actorLabel(payload.caster);
+                const targetLabel = actorLabel(payload.target);
+                logDetail(ev, `${casterLabel} 命中 ${targetLabel} 造成 ${fmt0(payload.dmg || 0)} 点伤害`);
             }
-            append(`[${fmt(ev.t)}] Hit ${ev.payload.elem} dmg=${ev.payload.dmg} -> ${ev.payload.target} hp=${ev.payload.hp}`);
             break;
         }
         case 'Reaction': {
-            const b = findBoss(); if (b) spawnFXText(b.x, b.y-48, `⚡ ${ev.payload.id}`, 1.0);
-            append(`[${fmt(ev.t)}] ⚡ Reaction: ${ev.payload.id}`);
+            const reactionId = ev.payload?.id;
+            const b = findBoss(); if (b) spawnFXText(b.x, b.y-48, `✦${reactionId ?? ''}`, 1.0);
+            if (!preferLogLines){
+                logDetail(ev, `触发元素反应 ${reactionId || '未知反应'}`);
+            } else {
+                append(`[${fmtTime(ev.t)}] ⚡ Reaction: ${reactionId}`);
+            }
             break;
         }
         case 'ReactionDamage': {
-            const target = actors.get(ev.payload.target);
+            const payload = ev.payload || {};
+            const target = actors.get(payload.target);
             if (target){
-                target.hp = ev.payload.hp ?? target.hp;
+                target.hp = payload.hp ?? target.hp;
                 if (target.isBoss) bossHP = target.hp;
                 spawnHitRing(target.x, target.y);
-                spawnFXText(target.x, target.y-24, `⚡-${ev.payload.amount}`, 0.8);
+                spawnFXText(target.x, target.y-24, `-${fmt0(payload.amount || 0)}`, 0.8);
                 updateHUD();
             }
-            const src = ev.payload.source;
+            const src = payload.source;
             if (src){
                 const rec = dmgByHero.get(src) || {total:0, skill:0, react:0};
-                rec.total += ev.payload.amount||0; rec.react += ev.payload.amount||0;
+                const amount = payload.amount || 0;
+                rec.total += amount; rec.react += amount;
                 dmgByHero.set(src, rec);
             }
             renderMeters();
-            append(`[${fmt(ev.t)}] ⚡ ReactionDamage ${ev.payload.reaction} -${ev.payload.amount} by ${src}`);
+            if (!preferLogLines){
+                logDetail(ev, `${payload.reaction || '反应伤害'} 对 ${actorLabel(payload.target)} 造成 ${fmt0(payload.amount || 0)} 点伤害`);
+            } else {
+                append(`[${fmtTime(ev.t)}] ⚡ ReactionDamage ${payload.reaction} -${payload.amount} by ${src}`);
+            }
             break;
         }
         case 'GuardChanged': {
             guard = ev.payload.guard ?? guard; updateHUD();
-            append(`[${fmt(ev.t)}] Guard=${guard}`); break;
+            if (!preferLogLines){
+                logDetail(ev, `护甲变动至 ${fmt0(guard)}`);
+            } else {
+                append(`[${fmtTime(ev.t)}] Guard=${guard}`);
+            }
+            break;
         }
         case 'PhaseEnter': {
-            const b = findBoss(); if (b) spawnFXText(b.x, b.y-70, `=== Phase ${ev.payload.phase} ===`, 1.2);
-            append(`[${fmt(ev.t)}] === Phase ${ev.payload.phase} ===`); break;
+            const phase = ev.payload?.phase;
+            const b = findBoss(); if (b) spawnFXText(b.x, b.y-70, `=== Phase ${phase} ===`, 1.2);
+            if (!preferLogLines){
+                logDetail(ev, `进入阶段 ${phase}`);
+            } else {
+                append(`[${fmtTime(ev.t)}] === Phase ${phase} ===`);
+            }
+            break;
         }
         case 'Announce': {
-            const b = findBoss(); if (b) spawnFXText(b.x, b.y-90, `📢 ${ev.payload.text}`, 1.2);
-            append(`[${fmt(ev.t)}] 📢 ${ev.payload.text}`); break;
+            const text = ev.payload?.text ?? '';
+            const b = findBoss(); if (b) spawnFXText(b.x, b.y-90, `📢 ${text}`, 1.2);
+            if (!preferLogLines){
+                logDetail(ev, `公告：${text}`);
+            } else {
+                append(`[${fmtTime(ev.t)}] 📢 ${text}`);
+            }
+            break;
+        }
+        case 'LogLine': {
+            preferLogLines = true;
+            const text = ev.payload?.text ?? '';
+            append(`[${fmtTime(ev.t)}] ${text}`);
+            break;
         }
         default:
-            append(`[${fmt(ev.t)}] ${ev.type}`);
+            if (!preferLogLines){
+                logDetail(ev, `事件 ${ev.type}`);
+            } else {
+                append(`[${fmtTime(ev.t)}] ${ev.type}`);
+            }
     }
 }
 
@@ -287,10 +404,97 @@ function pickColor(id){
     let h=0; for (let i=0;i<id.length;i++) h=(h*131+id.charCodeAt(i))>>>0;
     return table[h%table.length];
 }
-function badgeFor(s){ return s==='wet'?'💧': s==='burning'?'🔥': s==='frostbite'?'❄️': s==='slow'?'🐢':'☆'; }
+function badgeFor(s){
+    const badges = {
+        wet: '💧',
+        burning: '🔥',
+        frostbite: '❄️',
+        slow: '🐢',
+        shock: '⚡',
+        weaken: '⚠️'
+    };
+    return badges[s] || '⬢';
+}
 function fmt(x){ return (x ?? 0).toFixed(2); }
 function fmt0(n){ return (n||0).toLocaleString(); }
 function toPxX(mx){ return 60 + mx*60 }
 function toPxY(my){ return 60 + (10-my)*40 }
 function findBoss(){ for (const a of actors.values()) if (a.isBoss) return a; return null; }
 function append(s){ const el=document.createElement('div'); el.textContent=s; logBox.appendChild(el); logBox.scrollTop=logBox.scrollHeight; }
+function logDetail(ev, text){ append(`[${fmtTime(ev?.t)}] ${text}`); }
+function fmtTime(t){
+    const totalMs = Math.max(0, Math.round((t ?? 0) * 1000));
+    const totalSeconds = Math.floor(totalMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const millis = totalMs % 1000;
+    const pad2 = n => n.toString().padStart(2, '0');
+    const pad3 = n => n.toString().padStart(3, '0');
+    return `${pad2(minutes)}:${pad2(seconds)}.${pad3(millis)}`;
+}
+function loadMeta(meta){
+    metaInfo.heroNames.clear();
+    metaInfo.heroMaxHp.clear();
+    metaInfo.intentNames.clear();
+    metaInfo.skillNames.clear();
+    metaInfo.bossId = null;
+    metaInfo.bossName = null;
+    if (!meta) return;
+    const heroes = meta.heroes || meta.Heroes || [];
+    for (const hero of heroes){
+        if (!hero || !hero.id) continue;
+        if (hero.name) metaInfo.heroNames.set(hero.id, hero.name);
+        const mhp = hero.max_hp ?? hero.maxHp ?? hero.hp;
+        if (mhp) metaInfo.heroMaxHp.set(hero.id, mhp);
+        if (hero.skills && typeof hero.skills === 'object'){
+            for (const [sid, sname] of Object.entries(hero.skills)){
+                if (sid && sname) metaInfo.skillNames.set(sid, sname);
+            }
+        }
+    }
+    const skillMap = meta.skill_names || meta.skills || meta.SkillNames;
+    if (skillMap && typeof skillMap === 'object'){
+        for (const [sid, sname] of Object.entries(skillMap)){
+            if (sid && sname) metaInfo.skillNames.set(sid, sname);
+        }
+    }
+    const boss = meta.boss || meta.Boss;
+    if (boss){
+        metaInfo.bossId = boss.id ?? boss.Id ?? null;
+        metaInfo.bossName = boss.name ?? boss.Name ?? metaInfo.bossId;
+        const bossMaxHp = boss.max_hp ?? boss.maxHp;
+        const bossGuard = boss.guard_max ?? boss.guardMax;
+        if (bossMaxHp) maxHP = bossMaxHp;
+        if (bossGuard) maxGuard = bossGuard;
+    }
+    const intents = meta.intents || meta.Intents || (boss && boss.intents);
+    if (Array.isArray(intents)){
+        for (const intent of intents){
+            if (!intent || !intent.id) continue;
+            metaInfo.intentNames.set(intent.id, intent.name || intent.id);
+        }
+    }
+}
+function displayName(id){
+    if (!id) return '未知';
+    if (metaInfo.heroNames.has(id)) return metaInfo.heroNames.get(id);
+    if (id === metaInfo.bossId && metaInfo.bossName) return metaInfo.bossName;
+    return id;
+}
+function actorLabel(id){
+    if (!id) return '未知目标';
+    const name = displayName(id);
+    return name && name !== id ? `${name} (${id})` : name;
+}
+function skillLabel(id){
+    if (!id) return '未知技能';
+    return metaInfo.skillNames.get(id) || metaInfo.intentNames.get(id) || id;
+}
+function statusLabel(id){
+    if (!id) return '未知状态';
+    return STATUS_LABELS[id] || id;
+}
+function elemLabel(id){
+    if (!id) return '';
+    return ELEMENT_LABELS[id] || id;
+}

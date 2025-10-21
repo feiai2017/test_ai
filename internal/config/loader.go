@@ -15,22 +15,26 @@ func loadYAML(path string, out any) error {
 	return yaml.Unmarshal(b, out)
 }
 
-func LoadAll(dir string) (*ElementsConfig, *ReactionsConfig, *SkillsConfig, *BossConfig, error) {
+func LoadAll(dir string) (*ElementsConfig, *ReactionsConfig, *SkillsConfig, *HeroesConfig, *BossConfig, error) {
 	var ec ElementsConfig
 	var rc ReactionsConfig
 	var sc SkillsConfig
+	var hc HeroesConfig
 	var bc BossConfig
 	if err := loadYAML(filepath.Join(dir, "elements.yaml"), &ec); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	if err := loadYAML(filepath.Join(dir, "skills.yaml"), &sc); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 	if err := loadYAML(filepath.Join(dir, "reactions.yaml"), &rc); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
+	}
+	if err := loadYAML(filepath.Join(dir, "heroes.yaml"), &hc); err != nil {
+		return nil, nil, nil, nil, nil, err
 	}
 	if err := loadYAML(filepath.Join(dir, "boss_phases", "boss001.yaml"), &bc); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
-	return &ec, &rc, &sc, &bc, nil
+	return &ec, &rc, &sc, &hc, &bc, nil
 }

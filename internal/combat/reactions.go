@@ -16,6 +16,7 @@ type ReactionResolver struct {
 	OnReaction       func(reactionID string, targetID string, sourceHeroID string)
 	OnReactionDamage func(reactionID string, amount float64, sourceHeroID string)
 	OnCooldownAdjust func(heroID string, amount float64, tags []string)
+	OnGuardDamage    func(target *Entity, amount float64, source string)
 }
 
 func NewReactionResolver(rc *config.ReactionsConfig, ec *config.ElementsConfig, now func() float64, emit func(Event)) *ReactionResolver {
@@ -59,12 +60,16 @@ func (rr *ReactionResolver) TryTrigger(atkElem string, target *Entity, sourceHer
 					delete(target.Statuses, s)
 				}
 			case "break_guard":
-				if target.Guard > 0 {
-					target.Guard -= int(ef.Value)
-					if target.Guard < 0 {
-						target.Guard = 0
+				if ef.Value > 0 {
+					if rr.OnGuardDamage != nil {
+						rr.OnGuardDamage(target, ef.Value, r.ID)
+					} else if target.Guard > 0 {
+						target.Guard -= int(ef.Value)
+						if target.Guard < 0 {
+							target.Guard = 0
+						}
+						rr.Emit(Event{T: now, Type: "GuardChanged", Payload: map[string]any{"guard": target.Guard}})
 					}
-					rr.Emit(Event{T: now, Type: "GuardChanged", Payload: map[string]any{"guard": target.Guard}})
 				}
 			case "shred_resist":
 				for k, v := range ef.Table {

@@ -25,26 +25,41 @@ func main() {
 	flag.BoolVar(&saveLog, "log", true, "save full event log when n==1")
 	flag.Parse()
 
-	elems, reacts, skillsCfg, bossCfg, err := config.LoadAll(cfgDir)
+	elems, reacts, skillsCfg, heroesCfg, bossCfg, err := config.LoadAll(cfgDir)
 	if err != nil {
 		panic(err)
 	}
 	skillBook := combat.NewSkillBook(skillsCfg)
 
+	makeHeroes := func() []combat.Hero {
+		if heroesCfg == nil || len(heroesCfg.Heroes) == 0 {
+			return []combat.Hero{
+				{ID: "pyro_knight", Elem: "fire", Tags: map[string]bool{}},
+				{ID: "aqua_mage", Elem: "water", Tags: map[string]bool{}},
+				{ID: "storm_rogue", Elem: "storm", Tags: map[string]bool{}},
+			}
+		}
+		var heroes []combat.Hero
+		for _, h := range heroesCfg.Heroes {
+			tags := map[string]bool{}
+			for _, tag := range h.Tags {
+				tags[tag] = true
+			}
+			heroes = append(heroes, combat.Hero{ID: h.ID, Elem: h.Element, Tags: tags})
+		}
+		return heroes
+	}
+
 	if n <= 1 {
 		env := &combat.Env{Rng: util.New(seed)}
 		boss := combat.NewBoss(bossID, bossCfg.MaxHP, bossCfg.GuardMax)
-		party := combat.NewParty([]combat.Hero{
-			{ID: "pyro_knight", Elem: "fire", Tags: map[string]bool{}},
-			{ID: "aqua_mage", Elem: "water", Tags: map[string]bool{}},
-			{ID: "storm_rogue", Elem: "storm", Tags: map[string]bool{}},
-		}, skillBook)
+		party := combat.NewParty(makeHeroes(), skillBook)
 		events := make([]combat.Event, 0, 256)
 		emit := func(ev combat.Event) { events = append(events, ev) }
 		rr := combat.NewReactionResolver(reacts, elems, func() float64 { return env.Time }, emit)
 		ph := combat.NewBossPhaser(bossCfg, boss, emit)
 
-		res := combat.RunSingle(env, boss, party, rr, ph, saveLog)
+		res := combat.RunSingle(env, boss, party, rr, ph, bossCfg, heroesCfg, saveLog)
 		if saveLog && res.Events == nil {
 			res.Events = events
 		}
@@ -78,15 +93,11 @@ func main() {
 			for i := range jobs {
 				env := &combat.Env{Rng: util.New(seed + int64(workerID)*7919 + int64(i))}
 				boss := combat.NewBoss(bossID, bossCfg.MaxHP, bossCfg.GuardMax)
-				party := combat.NewParty([]combat.Hero{
-					{ID: "pyro_knight", Elem: "fire", Tags: map[string]bool{}},
-					{ID: "aqua_mage", Elem: "water", Tags: map[string]bool{}},
-					{ID: "storm_rogue", Elem: "storm", Tags: map[string]bool{}},
-				}, skillBook)
+				party := combat.NewParty(makeHeroes(), skillBook)
 				noop := func(ev combat.Event) {}
 				rr := combat.NewReactionResolver(reacts, elems, func() float64 { return env.Time }, noop)
 				ph := combat.NewBossPhaser(bossCfg, boss, noop)
-				res := combat.RunSingle(env, boss, party, rr, ph, false)
+				res := combat.RunSingle(env, boss, party, rr, ph, bossCfg, heroesCfg, false)
 
 				mu.Lock()
 				if res.Win {
